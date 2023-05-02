@@ -1,5 +1,4 @@
 const path = require('path');
-const CopyPlugin = require('copy-webpack-plugin');
 const HtmlPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const tailwindcss = require('tailwindcss')
@@ -50,12 +49,6 @@ module.exports = {
     "plugins": [
         new CleanWebpackPlugin({
             cleanStaleWebpackAssets: false
-        }),
-        new CopyPlugin({
-            patterns: [{
-                from: path.resolve('src/static'),
-                to: path.resolve('dist')
-            }]
         }),
         ...getHtmlPlugins([
             'popup',
