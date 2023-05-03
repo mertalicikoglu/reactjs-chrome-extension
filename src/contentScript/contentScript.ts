@@ -11,6 +11,11 @@ const emailLabel = document.createElement("label");
 const emailInput = document.createElement("input");
 const messageLabel = document.createElement("label");
 const maxTeklifLabel = document.createElement("label");
+
+const kullaniciMaxTeklifLabel = document.createElement("label");
+
+
+const minTeklifArtisMiktariLabel = document.createElement("label");
 const messageInput = document.createElement("textarea");
 const saveButton = document.createElement("button");
 
@@ -59,6 +64,16 @@ messageLabel.style.marginBottom = "5px";
 maxTeklifLabel.textContent = "Max Teklif:";
 maxTeklifLabel.style.display = "block";
 maxTeklifLabel.style.marginBottom = "5px";
+
+kullaniciMaxTeklifLabel.textContent = "kullaniciMax Teklif:";
+kullaniciMaxTeklifLabel.style.display = "block";
+kullaniciMaxTeklifLabel.style.marginBottom = "5px";
+
+minTeklifArtisMiktariLabel.textContent = "MinTeklifArtisMiktari Teklif:";
+minTeklifArtisMiktariLabel.style.display = "block";
+minTeklifArtisMiktariLabel.style.marginBottom = "5px";
+
+
 messageInput.style.width = "100%";
 messageInput.style.padding = "5px";
 messageInput.style.resize = "none";
@@ -80,6 +95,9 @@ button.addEventListener("click", () => {
 let token = "";
 let maxTeklifNum = 0;
 let maxLimit = 0;
+let minTeklifArtisMiktariNum = 0;
+let kullaniciMaxTeklifNum = 0;
+let ihaleTeklifi = false;
 // Save butonu tıklama olayını dinleyin
 saveButton.addEventListener("click", () => {
   token = nameInput.value.trim();
@@ -119,6 +137,8 @@ function mergeHtml() {
   form.appendChild(emailInput);
   form.appendChild(messageLabel);
   form.appendChild(maxTeklifLabel);
+  form.appendChild(kullaniciMaxTeklifLabel);
+  form.appendChild(minTeklifArtisMiktariLabel);
   form.appendChild(messageInput);
 
   chatContainer.appendChild(form);
@@ -133,11 +153,28 @@ function setDate(targetDate) {
 }
 
 function setMaxTeklif(maxTeklif) {
-  maxTeklif = parseFloat(maxTeklif.replace(".", ","));
+  maxTeklif = parseFloat(maxTeklif);
   maxTeklifLabel.textContent = maxTeklif;
   maxTeklifNum = maxTeklif;
   console.log("maxTeklifNum", maxTeklifNum);
 }
+
+function setKullaniciMaxTeklif(kullaniciMaxTeklif) {
+  kullaniciMaxTeklif = parseFloat(kullaniciMaxTeklif);
+  kullaniciMaxTeklifLabel.textContent = kullaniciMaxTeklif;
+  kullaniciMaxTeklifNum = kullaniciMaxTeklif;
+  console.log("kullaniciMaxTeklif", kullaniciMaxTeklif);
+
+}
+
+
+function setMinTeklifArtisMiktari(minTeklifArtisMiktari) {
+  minTeklifArtisMiktari = parseFloat(minTeklifArtisMiktari);
+  minTeklifArtisMiktariLabel.textContent = minTeklifArtisMiktari;
+  minTeklifArtisMiktariNum = minTeklifArtisMiktari;
+  console.log("minTeklifArtisMiktariNum", minTeklifArtisMiktariNum);
+}
+
 
 function countDown(targetDate) {
   const countDownDate = new Date(targetDate).getTime();
@@ -157,6 +194,7 @@ function countDown(targetDate) {
 
   return `${days} days ${hours} hours ${minutes} minutes ${seconds} seconds`;
 }
+
 
 function getBasicData(token, interval): void {
   var myHeaders = new Headers();
@@ -206,17 +244,86 @@ function getBasicData(token, interval): void {
       console.log("xmldoc", xmlDoc);
 
       const ihaleBitisZamani = xmlDoc.querySelector("ihaleBitisZamani");
-      const maxTeklif = xmlDoc.querySelector("ihale1MaxTeklif");
+      const maxTeklif = xmlDoc.querySelector("sonTeklif");
       const minTeklifArtisMiktari = xmlDoc.querySelector(
         "minTeklifArtisMiktari"
       );
+      const kullaniciMaxTeklif = xmlDoc.querySelector(
+        "kullaniciMaxTeklif"
+      );
       console.log("ihaleBitisZamani", ihaleBitisZamani.textContent);
       console.log("maxTeklif", maxTeklif.textContent);
-      if (!interval) setDate(ihaleBitisZamani.textContent);
-      setMaxTeklif(maxTeklif.textContent);
-      setMinTeklifArtisMiktari(minTeklifArtisMiktari.textContent);
+      console.log("kullaniciMaxTeklif", kullaniciMaxTeklif.textContent);
+      if (!interval) {
+        setDate(ihaleBitisZamani.textContent);
+        setMinTeklifArtisMiktari(minTeklifArtisMiktari.textContent);
+      }
+
+      setMaxTeklif(maxTeklif?.textContent);
+      setKullaniciMaxTeklif(kullaniciMaxTeklif?.textContent)
+
+      if (kullaniciMaxTeklifNum && !ihaleTeklifi){
+
+        if (maxTeklifNum  == 0 || (kullaniciMaxTeklifNum < maxTeklifNum && kullaniciMaxTeklifNum < maxLimit)) {
+          const teklifMiktari = maxTeklifNum + minTeklifArtisMiktariNum;
+          console.log("ihale teklifi yapıldı");
+          ihaleTeklifi = true;
+          setTimeout(() => {
+            console.log("ihale teklifi timeout")
+            ihaleTeklifi = false;
+          }, 3000);
+          //ihaleTeklifİslemleri(token, teklifMiktari)
+        }
+      }
+
+      
+
+
     })
     .catch((error) => console.log("error", error));
+}
+
+
+function ihaleTeklifİslemleri(token, teklifMiktari) {
+  ihaleTeklifi = true;
+  var myHeaders = new Headers();
+  myHeaders.append("Accept", "application/json, text/javascript, */*; q=0.01");
+  myHeaders.append("Accept-Language", "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7");
+  myHeaders.append("Connection", "keep-alive");
+  myHeaders.append("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+  myHeaders.append("Cookie", token);
+  myHeaders.append("Origin", "https://esatis.uyap.gov.tr");
+  myHeaders.append("Referer", window.location.href);
+  myHeaders.append("Sec-Fetch-Dest", "empty");
+  myHeaders.append("Sec-Fetch-Mode", "cors");
+  myHeaders.append("Sec-Fetch-Site", "same-origin");
+  myHeaders.append("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36");
+  myHeaders.append("X-Requested-With", "XMLHttpRequest");
+  myHeaders.append("sec-ch-ua", "\"Chromium\";v=\"112\", \"Google Chrome\";v=\"112\", \"Not:A-Brand\";v=\"99\"");
+  myHeaders.append("sec-ch-ua-mobile", "?0");
+  myHeaders.append("sec-ch-ua-platform", "\"Windows\"");
+
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const kayitId = urlParams.get("kayitId");
+  var raw = "kayitId=" + kayitId + "&teklifMiktari=" + teklifMiktari;
+
+  var requestOptions: RequestInit = {
+    method: 'POST',
+    headers: myHeaders,
+    body: raw,
+    redirect: 'follow'
+  };
+
+  fetch("https://esatis.uyap.gov.tr/main/jsp/esatis/ihaleTeklifIslemleri_brd.ajx", requestOptions)
+    .then(response => response.text())
+    .then(result => {
+      ihaleTeklifi = false
+      console.log("ihale teklifi",result)
+    } )
+    .catch(error => {
+      ihaleTeklifi = false;
+      console.log('error', error)});
 }
 
 window.onload = (event) => {
